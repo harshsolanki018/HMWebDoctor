@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" role="img" aria-label="HMWebDoctor Logo">
+  <g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 86V34l30 30 30-30v52"/>
+    <path d="M96 34v52"/>
+    <path d="M96 60h22"/>
+    <path d="M126 84c16-34 36-50 61-50 23 0 40 13 56 34"/>
+    <path d="M239 60h26"/>
+    <path d="M252 47v26"/>
+  </g>
+  <text x="290" y="78" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="54" font-weight="700" letter-spacing="-2" fill="currentColor">WebDoctor</text>
+</svg>
