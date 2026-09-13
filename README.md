@@ -73,12 +73,17 @@ The backend provides a health check endpoint at `/api/health`:
 - **Healthy**: `{ "success": true, "data": { "status": "healthy", "services": { "api": "healthy", "database": "healthy" } }, "error": null }`
 - **Degraded**: `{ "success": true, "data": { "status": "degraded", "services": { "api": "healthy", "database": "unavailable" } }, "error": null }`
 
-## Scan Infrastructure Endpoint
-The backend provides a secure baseline website scanning endpoint at `POST /api/scans`:
+## Scan Infrastructure & Passive Analyzers (`POST /api/scans`)
+The backend provides a secure diagnostic website scanning endpoint at `POST /api/scans`:
 - **Request**: `{ "url": "https://example.com" }`
 - **SSRF Protection**: Socket-level DNS rebinding prevention, loopback & private IP blocking, cloud metadata blocking, and port whitelisting (80, 443, 8080, 8443).
-- **Safety Limits**: Manual 5-hop redirect loop validation, 5MB response size cutoff, and 30s timeout enforcement.
-- **Baseline Extraction**: HTML title, lang attribute, charset, meta description, document byte size, and DOCTYPE declaration.
+- **Safety Limits**: Manual 5-hop redirect loop validation, 5MB response size cutoff, 30s timeout enforcement, and rate limiting (10 req/15m).
+- **Baseline Metadata**: HTML title, lang attribute, charset, meta description, document byte size, and DOCTYPE declaration.
+- **Passive Diagnostic Scanners (M4)**:
+  - **SEO**: Title length (30-60 chars), meta description length (50-160 chars), canonical URL matching, meta robots directives, viewport configuration, heading hierarchy sequence, and Open Graph tags.
+  - **Security Headers**: HTTPS transport, HSTS (max-age >= 180d), CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and non-sensitive Set-Cookie flags.
+  - **Crawlability**: X-Robots-Tag, HTML sitemap link tags, and bounded single fetch to `<origin>/robots.txt`.
+  - **Technical**: HTTP status codes, payload compression (gzip/br), cache controls, charset consistency, DOCTYPE, and payload size.
 
 ## Documentation
 See [HMWebDoctor_V1_Antigravity_Build_Package](./HMWebDoctor_V1_Antigravity_Build_Package/00_README.md) for full specifications.

@@ -3,6 +3,13 @@ import PropTypes from 'prop-types';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { SeoFindingsCard } from './SeoFindingsCard';
+import { SecurityHeadersCard } from './SecurityHeadersCard';
+import { CrawlabilityCard } from './CrawlabilityCard';
+import { TechnicalDetailsCard } from './TechnicalDetailsCard';
+import { PerformanceCard } from './PerformanceCard';
+import { AccessibilityCard } from './AccessibilityCard';
+import { MobileReadinessCard } from './MobileReadinessCard';
 import {
   Globe,
   Clock,
@@ -14,6 +21,7 @@ import {
   ArrowRight,
   ShieldCheck,
   Tag,
+  ListChecks,
 } from 'lucide-react';
 
 export const ScanResultView = ({ scanData, onNewScan }) => {
@@ -27,6 +35,8 @@ export const ScanResultView = ({ scanData, onNewScan }) => {
     redirectChain = [],
     timing = {},
     document: doc = {},
+    categories = {},
+    summary = {},
   } = scanData;
 
   const baseline = doc.baseline || {};
@@ -92,6 +102,32 @@ export const ScanResultView = ({ scanData, onNewScan }) => {
               </div>
             </div>
           </div>
+
+          {/* Overall Diagnostic Finding Counts */}
+          {summary && (typeof summary.pass === 'number' || typeof summary.warn === 'number') && (
+            <div className="p-4 rounded-xl bg-surface border border-border space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted">
+                <ListChecks className="w-4 h-4 text-primary" />
+                Total Scan Finding Counts
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge variant="pass" size="md">
+                  {summary.pass || 0} Passed Checks
+                </Badge>
+                <Badge variant="warn" size="md">
+                  {summary.warn || 0} Warnings
+                </Badge>
+                <Badge variant="info" size="md">
+                  {summary.info || 0} Informational
+                </Badge>
+                {summary.fail > 0 && (
+                  <Badge variant="danger" size="md">
+                    {summary.fail} Failures
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* URLs and Redirect Information */}
           <div className="space-y-3 pt-2">
@@ -214,6 +250,27 @@ export const ScanResultView = ({ scanData, onNewScan }) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Category Analyzer Cards */}
+      {categories.seo && <SeoFindingsCard seoData={categories.seo} />}
+      {categories.securityHeaders && (
+        <SecurityHeadersCard securityData={categories.securityHeaders} />
+      )}
+      {categories.crawlability && (
+        <CrawlabilityCard crawlabilityData={categories.crawlability} />
+      )}
+      {categories.technical && (
+        <TechnicalDetailsCard technicalData={categories.technical} />
+      )}
+      {categories.performance && (
+        <PerformanceCard performanceData={categories.performance} />
+      )}
+      {categories.accessibility && (
+        <AccessibilityCard accessibilityData={categories.accessibility} />
+      )}
+      {categories.mobile && (
+        <MobileReadinessCard mobileData={categories.mobile} />
+      )}
     </div>
   );
 };
@@ -227,6 +284,8 @@ ScanResultView.propTypes = {
     redirectChain: PropTypes.array,
     timing: PropTypes.object,
     document: PropTypes.object,
+    summary: PropTypes.object,
+    categories: PropTypes.object,
   }),
   onNewScan: PropTypes.func.isRequired,
 };

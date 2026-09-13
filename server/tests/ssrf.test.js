@@ -1,5 +1,5 @@
 const dns = require('dns').promises;
-const { isPrivateIp, isIpSafe, isHostnameUnsafe, validateIpAddress } = require('../src/validators/ipValidator');
+const { isPrivateIp, isHostnameUnsafe, validateIpAddress } = require('../src/validators/ipValidator');
 const { fetchSafeUrl, ScannerFetchError, validateUrlSyntaxAndPolicy } = require('../src/services/safeFetcher');
 const { createSafeDnsLookup } = require('../src/utils/safeDnsLookup');
 

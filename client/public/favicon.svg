@@ -1,4 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#0f172a"/>
-  <path d="M14 47V17l13 14 13-14v30M40 17v30M40 32h10M45 27v10" fill="none" stroke="#0d9488" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="2048" viewBox="0 0 2048 2048">
+  <defs>
+    <!-- Brand gradient matching the generated teal logo -->
+    <linearGradient id="brandGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38E8D0"/>
+      <stop offset="38%" stop-color="#12C8B8"/>
+      <stop offset="72%" stop-color="#079FA7"/>
+      <stop offset="100%" stop-color="#075B70"/>
+    </linearGradient>
+
+    <linearGradient id="highlightGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9AFFF1" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#9AFFF1" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="lowerGradient" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#2EE6D1" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#2EE6D1" stop-opacity="0"/>
+    </linearGradient>
+
+    <clipPath id="tileClip">
+      <rect x="112" y="112" width="1824" height="1824" rx="430"/>
+    </clipPath>
+  </defs>
+
+  <!-- Transparent canvas; only the logo tile is rendered -->
+  <g clip-path="url(#tileClip)">
+    <rect x="112" y="112" width="1824" height="1824" rx="430" fill="url(#brandGradient)"/>
+
+    <!-- Subtle curved highlight, matching the generated logo style -->
+    <ellipse cx="250" cy="120" rx="760" ry="610" fill="url(#highlightGradient)"/>
+
+    <!-- Subtle lower-right layered curve -->
+    <ellipse cx="1830" cy="1930" rx="980" ry="700" fill="url(#lowerGradient)"/>
+
+    <!-- Very subtle inner depth -->
+    <rect x="116" y="116" width="1816" height="1816" rx="426"
+          fill="none" stroke="#8CFFF4" stroke-opacity="0.22" stroke-width="8"/>
+  </g>
+
+  <!-- Original developer mark preserved, recolored only through its presentation -->
+  <path
+    d="M790 720 L470 1024 L790 1328
+       M1258 720 L1578 1024 L1258 1328
+       M1080 640 L968 1408"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="112"
+    stroke-linecap="round"
+    stroke-linejoin="round"/>
 </svg>

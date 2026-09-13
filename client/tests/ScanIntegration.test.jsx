@@ -29,7 +29,6 @@ describe('Milestone 3 — Scan Page Integration Suite', () => {
           statusCode: 200,
           contentType: 'text/html; charset=UTF-8',
           contentLengthBytes: 1250,
-          ipAddress: '93.184.216.34',
           baseline: {
             title: 'Example Domain',
             lang: 'en',

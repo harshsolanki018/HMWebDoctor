@@ -25,7 +25,6 @@ vi.mock('../src/services/api', () => ({
         statusCode: 200,
         contentType: 'text/html',
         contentLengthBytes: 500,
-        ipAddress: '93.184.216.34',
         baseline: { title: 'Test', lang: 'en', charset: 'utf-8', hasDoctype: true },
       },
     },

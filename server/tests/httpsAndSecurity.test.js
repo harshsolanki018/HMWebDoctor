@@ -16,24 +16,41 @@ describe('HTTPS, TLS & Information Exposure Security Tests', () => {
 
       vi.spyOn(https, 'request').mockImplementation((options, callback) => {
         capturedOptions = options;
+        const resListeners = {};
+        const resMock = {
+          statusCode: 200,
+          headers: { 'content-type': 'text/html' },
+          on: (event, fn) => {
+            resListeners[event] = fn;
+            if (event === 'end') {
+              setTimeout(() => fn(), 5);
+            }
+          },
+        };
+
         const mockReq = {
           on: vi.fn(),
           destroy: vi.fn(),
-          end: vi.fn(),
+          end: () => {
+            if (typeof options.lookup === 'function') {
+              options.lookup(options.hostname, {}, () => {
+                callback(resMock);
+              });
+            } else {
+              callback(resMock);
+            }
+          },
         };
         return mockReq;
       });
 
-      try {
-        await fetchSafeUrl('https://secure-target.com/page');
-      } catch (_err) {
-        // Expected because mockReq is partial
-      }
+      const result = await fetchSafeUrl('https://secure-target.com/page');
 
       expect(capturedOptions).not.toBeNull();
       expect(capturedOptions.servername).toBe('secure-target.com');
       // Verify rejectUnauthorized is NOT explicitly set to false
       expect(capturedOptions.rejectUnauthorized).not.toBe(false);
+      expect(result.statusCode).toBe(200);
     });
 
     it('preserves default HTTP Host header matching target hostname', async () => {
@@ -41,22 +58,39 @@ describe('HTTPS, TLS & Information Exposure Security Tests', () => {
 
       vi.spyOn(http, 'request').mockImplementation((options, callback) => {
         capturedOptions = options;
+        const resListeners = {};
+        const resMock = {
+          statusCode: 200,
+          headers: { 'content-type': 'text/html' },
+          on: (event, fn) => {
+            resListeners[event] = fn;
+            if (event === 'end') {
+              setTimeout(() => fn(), 5);
+            }
+          },
+        };
+
         const mockReq = {
           on: vi.fn(),
           destroy: vi.fn(),
-          end: vi.fn(),
+          end: () => {
+            if (typeof options.lookup === 'function') {
+              options.lookup(options.hostname, {}, () => {
+                callback(resMock);
+              });
+            } else {
+              callback(resMock);
+            }
+          },
         };
         return mockReq;
       });
 
-      try {
-        await fetchSafeUrl('http://my-domain.org/path');
-      } catch (_err) {
-        // Expected because mockReq is partial
-      }
+      const result = await fetchSafeUrl('http://my-domain.org/path');
 
       expect(capturedOptions).not.toBeNull();
       expect(capturedOptions.hostname).toBe('my-domain.org');
+      expect(result.statusCode).toBe(200);
     });
   });
 

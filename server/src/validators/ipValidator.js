@@ -40,6 +40,8 @@ const BLOCKED_HOSTNAMES = [
   'metadata.google.internal',
   'metadata.tencentyun.com',
   'instance-data',
+  'metadata',
+  'metadata.aws.com',
 ];
 
 /**

@@ -1,5 +1,5 @@
 const http = require('http');
-const { fetchSafeUrl, ScannerFetchError } = require('../src/services/safeFetcher');
+const { fetchSafeUrl } = require('../src/services/safeFetcher');
 
 describe('Redirect Policy, Streaming Size Limits & Timeout Security Tests', () => {
   beforeEach(() => {
@@ -8,9 +8,7 @@ describe('Redirect Policy, Streaming Size Limits & Timeout Security Tests', () =
 
   describe('1. Redirect Security & Hop Validation', () => {
     it('rejects redirect chain when a redirect step points to localhost / 127.0.0.1', async () => {
-      let callCount = 0;
       vi.spyOn(http, 'request').mockImplementation((options, callback) => {
-        callCount++;
         const resListeners = {};
         const resMock = {
           statusCode: 302,
