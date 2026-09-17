@@ -6,6 +6,15 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Search, X, Filter } from 'lucide-react';
 
+const DOMAIN_OPTIONS = [
+  { value: 'all', label: 'All Domains' },
+  { value: 'security', label: 'Security' },
+  { value: 'accessibility', label: 'Accessibility' },
+  { value: 'performance', label: 'Performance' },
+  { value: 'seo_crawlability', label: 'SEO & Crawlability' },
+  { value: 'markup_structure', label: 'Markup & Structure' },
+];
+
 const CATEGORY_OPTIONS = [
   { value: 'all', label: 'All Categories' },
   { value: 'seo', label: 'SEO' },
@@ -26,32 +35,24 @@ const SEVERITY_OPTIONS = [
   { value: 'info', label: 'Info' },
 ];
 
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'fail', label: 'Fail' },
-  { value: 'warn', label: 'Warn' },
-  { value: 'pass', label: 'Pass' },
-  { value: 'info', label: 'Info' },
-];
-
 export const FindingSearchBar = ({
   searchTerm,
   onSearchChange,
+  domainFilter,
+  onDomainChange,
   categoryFilter,
   onCategoryChange,
   severityFilter,
   onSeverityChange,
-  statusFilter,
-  onStatusChange,
   onResetFilters,
   totalCount,
   filteredCount,
 }) => {
   const isFiltered = Boolean(
     searchTerm.trim() ||
+    domainFilter !== 'all' ||
     categoryFilter !== 'all' ||
-    severityFilter !== 'all' ||
-    statusFilter !== 'all'
+    severityFilter !== 'all'
   );
 
   return (
@@ -79,8 +80,14 @@ export const FindingSearchBar = ({
           )}
         </div>
 
-        {/* Dropdown Filters */}
+        {/* Dropdown Filters: Domain, Category, Severity */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 shrink-0">
+          <Select
+            value={domainFilter}
+            onChange={(e) => onDomainChange(e.target.value)}
+            options={DOMAIN_OPTIONS}
+            aria-label="Filter findings by technical domain"
+          />
           <Select
             value={categoryFilter}
             onChange={(e) => onCategoryChange(e.target.value)}
@@ -92,12 +99,6 @@ export const FindingSearchBar = ({
             onChange={(e) => onSeverityChange(e.target.value)}
             options={SEVERITY_OPTIONS}
             aria-label="Filter findings by severity"
-          />
-          <Select
-            value={statusFilter}
-            onChange={(e) => onStatusChange(e.target.value)}
-            options={STATUS_OPTIONS}
-            aria-label="Filter findings by status"
           />
         </div>
 
@@ -127,12 +128,12 @@ export const FindingSearchBar = ({
 FindingSearchBar.propTypes = {
   searchTerm: PropTypes.string.isRequired,
   onSearchChange: PropTypes.func.isRequired,
+  domainFilter: PropTypes.string.isRequired,
+  onDomainChange: PropTypes.func.isRequired,
   categoryFilter: PropTypes.string.isRequired,
   onCategoryChange: PropTypes.func.isRequired,
   severityFilter: PropTypes.string.isRequired,
   onSeverityChange: PropTypes.func.isRequired,
-  statusFilter: PropTypes.string.isRequired,
-  onStatusChange: PropTypes.func.isRequired,
   onResetFilters: PropTypes.func.isRequired,
   totalCount: PropTypes.number.isRequired,
   filteredCount: PropTypes.number.isRequired,

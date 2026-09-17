@@ -91,6 +91,17 @@ router.get('/:scanId', reportRateLimiter, async (req, res, next) => {
         },
       });
     }
+    if (err.code === 'DATABASE_UNAVAILABLE') {
+      return res.status(503).json({
+        success: false,
+        data: null,
+        error: {
+          code: 'DATABASE_UNAVAILABLE',
+          message: 'Report storage is temporarily unavailable.',
+          details: null,
+        },
+      });
+    }
     if (err.code === 'NOT_FOUND') {
       return res.status(404).json({
         success: false,

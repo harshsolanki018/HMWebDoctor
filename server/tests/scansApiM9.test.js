@@ -94,13 +94,14 @@ describe('GET /api/scans/:scanId Public Report Retrieval API Suite', () => {
     expect(res.body.error.code).toBe('NOT_FOUND');
   });
 
-  it('returns HTTP 404 when MongoDB connection is offline', async () => {
+  it('returns HTTP 503 DATABASE_UNAVAILABLE when MongoDB connection is offline', async () => {
     vi.spyOn(mongoose.connection, 'readyState', 'get').mockReturnValue(0);
 
     const res = await request(app).get('/api/scans/scan_0123456789abcdef');
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(503);
     expect(res.body.success).toBe(false);
-    expect(res.body.error.code).toBe('NOT_FOUND');
+    expect(res.body.error.code).toBe('DATABASE_UNAVAILABLE');
+    expect(res.body.error.message).toBe('Report storage is temporarily unavailable.');
   });
 });
