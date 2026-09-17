@@ -12,6 +12,7 @@ import { ContactPage } from './pages/ContactPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { TermsPage } from './pages/TermsPage';
 import { ScanPage } from './pages/ScanPage';
+import { ReportPage } from './pages/ReportPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { DesignShowcase } from './pages/DesignShowcase';
 
@@ -29,6 +30,7 @@ export function AppRoutes() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/scan" element={<ScanPage />} />
+            <Route path="/reports/:scanId" element={<ReportPage />} />
             
             {/* Isolated unlinked internal design system showcase */}
             <Route path="/design-system" element={<DesignShowcase />} />

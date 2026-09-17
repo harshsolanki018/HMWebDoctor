@@ -8,6 +8,7 @@ export const SeoHead = ({
   title = 'Diagnose Your Website. Fix What Matters.',
   description = 'HMWebDoctor provides professional, safe, and actionable website health diagnostics across performance, SEO, security, accessibility, and mobile readiness.',
   canonicalPath,
+  noindex = false,
 }) => {
   const location = useLocation();
 
@@ -24,7 +25,16 @@ export const SeoHead = ({
     }
     metaDescription.content = description;
 
-    // 3. Update Canonical URL
+    // 3. Update Meta Robots (noindex, nofollow for shareable public reports)
+    let metaRobots = document.querySelector('meta[name="robots"]');
+    if (!metaRobots) {
+      metaRobots = document.createElement('meta');
+      metaRobots.name = 'robots';
+      document.head.appendChild(metaRobots);
+    }
+    metaRobots.content = noindex ? 'noindex, nofollow' : 'index, follow';
+
+    // 4. Update Canonical URL
     const currentPath = canonicalPath || location.pathname;
     const baseUrl = window.location.origin;
     const fullCanonicalUrl = `${baseUrl}${currentPath}`;
@@ -37,7 +47,7 @@ export const SeoHead = ({
     }
     canonicalLink.href = fullCanonicalUrl;
 
-    // 4. Update OpenGraph Tags
+    // 5. Update OpenGraph Tags
     const ogTags = [
       { property: 'og:title', content: document.title },
       { property: 'og:description', content: description },
@@ -55,7 +65,7 @@ export const SeoHead = ({
       }
       ogMeta.content = content;
     });
-  }, [title, description, canonicalPath, location]);
+  }, [title, description, canonicalPath, noindex, location]);
 
   return null;
 };

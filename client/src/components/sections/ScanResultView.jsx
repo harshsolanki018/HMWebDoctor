@@ -10,6 +10,10 @@ import { TechnicalDetailsCard } from './TechnicalDetailsCard';
 import { PerformanceCard } from './PerformanceCard';
 import { AccessibilityCard } from './AccessibilityCard';
 import { MobileReadinessCard } from './MobileReadinessCard';
+import { ContentQualityCard } from './ContentQualityCard';
+import { ActionCenterCard } from './ActionCenterCard';
+import { Alert } from '../ui/Alert';
+import { exportReportToJson, exportReportToCsv } from '../../utils/exportUtils';
 import {
   Globe,
   Clock,
@@ -22,6 +26,10 @@ import {
   ShieldCheck,
   Tag,
   ListChecks,
+  Share2,
+  Download,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 
 export const ScanResultView = ({ scanData, onNewScan }) => {
@@ -37,21 +45,59 @@ export const ScanResultView = ({ scanData, onNewScan }) => {
     document: doc = {},
     categories = {},
     summary = {},
+    isPersisted,
   } = scanData;
 
   const baseline = doc.baseline || {};
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Degraded Persistence Mode Alert */}
+      {isPersisted === false && (
+        <Alert variant="warning" title="Report Persistence Degraded">
+          This scan result could not be persisted to database storage. The diagnostic findings are fully visible in this browser session, but shareable permalinks are unavailable for this run.
+        </Alert>
+      )}
+
       {/* Overview Card */}
       <Card>
         <CardHeader
           title="Baseline Scan Summary"
           subtitle={`Scan ID: ${scanId}`}
           action={
-            <Button variant="outline" size="sm" icon={RotateCcw} onClick={onNewScan}>
-              Scan Another URL
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              {isPersisted !== false && (
+                <a
+                  href={`/reports/${scanId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  Shareable Report
+                  <ExternalLink className="w-3 h-3 ml-0.5" />
+                </a>
+              )}
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={Download}
+                onClick={() => exportReportToJson(scanData)}
+              >
+                Export JSON
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={FileText}
+                onClick={() => exportReportToCsv(scanData)}
+              >
+                Export CSV
+              </Button>
+              <Button variant="outline" size="sm" icon={RotateCcw} onClick={onNewScan}>
+                Scan Another URL
+              </Button>
+            </div>
           }
         />
         <CardContent className="space-y-6">
@@ -251,6 +297,9 @@ export const ScanResultView = ({ scanData, onNewScan }) => {
         </CardContent>
       </Card>
 
+      {/* Action Center - Prioritized Actionable Remediation */}
+      <ActionCenterCard actionCenterData={scanData.actionCenter} />
+
       {/* Category Analyzer Cards */}
       {categories.seo && <SeoFindingsCard seoData={categories.seo} />}
       {categories.securityHeaders && (
@@ -271,6 +320,9 @@ export const ScanResultView = ({ scanData, onNewScan }) => {
       {categories.mobile && (
         <MobileReadinessCard mobileData={categories.mobile} />
       )}
+      {categories.content && (
+        <ContentQualityCard contentData={categories.content} />
+      )}
     </div>
   );
 };
@@ -286,6 +338,7 @@ ScanResultView.propTypes = {
     document: PropTypes.object,
     summary: PropTypes.object,
     categories: PropTypes.object,
+    actionCenter: PropTypes.object,
   }),
   onNewScan: PropTypes.func.isRequired,
 };

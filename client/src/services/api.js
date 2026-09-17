@@ -50,3 +50,25 @@ export const executeScan = async (url) => {
     };
   }
 };
+
+/**
+ * Retrieve public scan report by scanId (/api/scans/:scanId)
+ * @param {string} scanId Standard scan ID (scan_[16 hex chars])
+ */
+export const getScanById = async (scanId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/scans/${encodeURIComponent(scanId)}`);
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    return {
+      success: false,
+      data: null,
+      error: {
+        code: 'NETWORK_ERROR',
+        message: error.message || 'Failed to retrieve scan report from server',
+      },
+    };
+  }
+};
+

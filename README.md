@@ -79,11 +79,37 @@ The backend provides a secure diagnostic website scanning endpoint at `POST /api
 - **SSRF Protection**: Socket-level DNS rebinding prevention, loopback & private IP blocking, cloud metadata blocking, and port whitelisting (80, 443, 8080, 8443).
 - **Safety Limits**: Manual 5-hop redirect loop validation, 5MB response size cutoff, 30s timeout enforcement, and rate limiting (10 req/15m).
 - **Baseline Metadata**: HTML title, lang attribute, charset, meta description, document byte size, and DOCTYPE declaration.
-- **Passive Diagnostic Scanners (M4)**:
-  - **SEO**: Title length (30-60 chars), meta description length (50-160 chars), canonical URL matching, meta robots directives, viewport configuration, heading hierarchy sequence, and Open Graph tags.
-  - **Security Headers**: HTTPS transport, HSTS (max-age >= 180d), CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and non-sensitive Set-Cookie flags.
-  - **Crawlability**: X-Robots-Tag, HTML sitemap link tags, and bounded single fetch to `<origin>/robots.txt`.
-  - **Technical**: HTTP status codes, payload compression (gzip/br), cache controls, charset consistency, DOCTYPE, and payload size.
+- **Passive Diagnostic Scanners (M4–M7)**:
+  - **SEO (M4)**: Title length (30-60 chars), meta description length (50-160 chars), canonical URL matching, meta robots directives, viewport configuration, heading hierarchy sequence, and Open Graph tags.
+  - **Security Headers (M4)**: HTTPS transport, HSTS (max-age >= 180d), CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and non-sensitive Set-Cookie flags.
+  - **Crawlability (M4)**: X-Robots-Tag, HTML sitemap link tags, and bounded single fetch to `<origin>/robots.txt`.
+  - **Technical (M4)**: HTTP status codes, payload compression (gzip/br), cache controls, charset consistency, DOCTYPE, and payload size.
+  - **Performance (M5)**: Transfer size, HTML document parsing latency, resource counts (script, stylesheet, img), inline script/style counts, render-blocking scripts, and image format optimization.
+  - **Accessibility (M6)**: `lang` attribute, image `alt` attributes, heading structure, form label association, button accessible names, link text quality, ARIA roles, table headers, iframe titles, and viewport scaling.
+  - **Mobile Responsiveness (M6)**: Viewport meta tag presence, viewport scale restrictions, horizontal overflow risk markup, tap target sizes, and responsive media tags.
+  - **Content & HTML Quality (M7)**: Body-only visible text extraction, character count, word count, low content warnings, empty page detection, repeated text signals, missing structural tags (`html`, `head`, `body`), duplicate IDs, empty/invalid `href`, and empty/invalid `src` attributes.
+- **Action Center & Remediation Engine (M8)**:
+  - **Prioritized Finding Aggregation**: Aggregates actionable (`fail`, `warn`) findings across all 8 scanner categories.
+  - **5-Tier Deterministic Ranking**: Severity (`high` > `medium` > `low`) $\rightarrow$ Technical Domain (`security` > `accessibility` > `performance` > `seo_crawlability` > `markup_structure`) $\rightarrow$ Category Rank $\rightarrow$ Finding ID Alphabetical $\rightarrow$ Discovery Index.
+  - **100% Static Code Fixes**: Static code snippet recommendations for all 55 exact source-derived finding IDs with zero parameter interpolation, zero external dependencies, and zero fake scores/grades.
+  - **Remediation Drawer UX**: Accessible slide-over drawer with focus management, plain-text code snippet rendering, and copy-to-clipboard functionality.
+
+## Shareable Scan Reports, Persistence & Data Export (`GET /api/scans/:scanId`) (M9)
+- **Public Report Endpoint (`GET /api/scans/:scanId`)**:
+  - Secure report retrieval endpoint returning sanitized public report DTOs for valid `scanId` identifiers (`/^scan_[a-f0-9]{16}$/`). Rate limited via `reportRateLimiter` (60 req/15m/IP).
+- **Public Report DTO Security Boundary**:
+  - Enforces strict field allowlist stripping MongoDB internal fields (`_id`, `__v`), raw HTML content, raw HTTP headers, cookies/tokens, and M3 internal destination IP metadata (`destinationIp`, `resolvedIps`).
+- **URL Privacy Sanitization**:
+  - Strips user credentials (`user:pass@`), the ENTIRE query string (`?token=...`), and the ENTIRE fragment (`#hash`) 100% for public persistence and reporting while preserving exact target URLs for scanning in M3.
+- **Bounded Write Timeout & Degraded Mode**:
+  - 2000ms write timeout (`Promise.race`) with direct `.catch()` rejection handling and 5MB payload limit. If DB is offline or times out, returns HTTP 200 with `isPersisted: false` and displays an honest degraded persistence warning.
+- **Shareable Report View & Privacy**:
+  - Accessible report view at `/reports/:scanId` configured with `<meta name="robots" content="noindex, nofollow" />` via `SeoHead` to prevent search engine indexing.
+- **Real-time Search & Multi-Group Filtering**:
+  - Text search (OR across finding ID, title, description, recommendation, value) and multi-group filter dropdowns (AND across category, severity, status).
+- **Client Data Export Utilities**:
+  - Export full report as `<scanId>.json` or flat findings as `<scanId>-findings.csv` with CSV formula injection protection (`sanitizeCsvCell`). Native `@media print` print styles for clean PDF/paper printing.
 
 ## Documentation
 See [HMWebDoctor_V1_Antigravity_Build_Package](./HMWebDoctor_V1_Antigravity_Build_Package/00_README.md) for full specifications.
+

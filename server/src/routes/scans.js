@@ -1,6 +1,7 @@
 const express = require('express');
 const { validateScanRequest } = require('../validators/scanValidator');
 const scanRateLimiter = require('../middleware/scanRateLimiter');
+const reportRateLimiter = require('../middleware/reportRateLimiter');
 const scanService = require('../services/scanService');
 
 const router = express.Router();
@@ -42,6 +43,56 @@ router.post('/', scanRateLimiter, validateScanRequest, async (req, res, next) =>
       }
 
       return res.status(statusCode).json({
+        success: false,
+        data: null,
+        error: {
+          code: err.code,
+          message: err.message,
+          details: null,
+        },
+      });
+    }
+
+    next(err);
+  }
+});
+
+router.get('/:scanId', reportRateLimiter, async (req, res, next) => {
+  try {
+    const { scanId } = req.params;
+    if (!scanId || !/^scan_[a-f0-9]{16}$/.test(scanId)) {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        error: {
+          code: 'INVALID_SCAN_ID',
+          message: 'Invalid scan ID format. Expected scan_[16 hex characters].',
+          details: null,
+        },
+      });
+    }
+
+    const reportDto = await scanService.getScanById(scanId);
+
+    return res.status(200).json({
+      success: true,
+      data: reportDto,
+      error: null,
+    });
+  } catch (err) {
+    if (err.code === 'INVALID_SCAN_ID') {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        error: {
+          code: err.code,
+          message: err.message,
+          details: null,
+        },
+      });
+    }
+    if (err.code === 'NOT_FOUND') {
+      return res.status(404).json({
         success: false,
         data: null,
         error: {

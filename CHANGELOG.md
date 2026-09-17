@@ -2,6 +2,92 @@
 
 All notable changes to HMWebDoctor will be documented in this file.
 
+## Milestone 9: Shareable Scan Reports, Persistence & Data Export
+
+### Added
+- **MongoDB Report Schema & Model (`Scan.js`)**:
+  - Strict Mongoose schema (`strict: true`, `bufferCommands: false`) with sub-schemas for baseline metadata, categories, findings, and Action Center items.
+  - Standardized unique `scanId` field matching `/^scan_[a-f0-9]{16}$/` with unique database index.
+  - 30-day retention TTL index (`expireAfterSeconds: 2592000`) on `createdAt` field for automatic database cleanup.
+- **Public Report DTO Security Boundary (`buildPublicReportDto`)**:
+  - Single canonical DTO conversion pipeline in `scanService.js` enforcing strict field allowlist.
+  - Strips MongoDB internal fields (`_id`, `__v`), raw HTML content, raw HTTP headers, cookies/tokens, and M3 internal destination IP metadata (`destinationIp`, `resolvedIps`).
+  - Strict URL Sanitization (`sanitizePublicUrl`): Strips user credentials (`user:pass@`), ENTIRE query string (`?token=...`), and ENTIRE fragment/hash (`#section`) 100%.
+- **Bounded Write Timeout & Degraded Persistence Mode**:
+  - 2000ms request-side write timeout enforced via `Promise.race` on `Scan.create`.
+  - Direct `.catch()` rejection handler attached to `Scan.create()` promise to swallow late DB rejections and prevent unhandled promise rejections.
+  - 5MB application payload boundary check (`Buffer.byteLength(JSON.stringify(publicDto), 'utf8') <= 5MB`).
+  - Degraded mode fallback (`isPersisted: false`): If DB is offline, write times out (>2000ms), or payload > 5MB, scan execution completes with HTTP 200 and frontend displays an honest degraded persistence warning without failing the user scan request.
+- **Public Report Retrieval API (`GET /api/scans/:scanId`)**:
+  - Secure report lookup route with Zod regex validation (`/^scan_[a-f0-9]{16}$/`).
+  - Rate limited via `reportRateLimiter` middleware (60 req/15m per IP).
+  - Returns HTTP 200 with sanitized public report DTO, HTTP 400 for malformed IDs (consuming quota), HTTP 404 for missing/expired reports or offline DB, and HTTP 429 for rate limit.
+- **Client-Side Export Utilities (`exportUtils.js`)**:
+  - `exportReportToJson(report)`: Downloads `<scanId>.json` containing formatted public report DTO.
+  - `exportReportToCsv(report)`: Downloads `<scanId>-findings.csv` containing flat finding rows across all 8 categories.
+  - CSV Injection Protection (`sanitizeCsvCell`): Mitigates formula injection in Excel/Google Sheets by prefixing cells starting with `=`, `+`, `-`, `@`, `\t`, `\r` with `'` (single quote) and escaping double quotes.
+- **Shareable Public Report Page & Search Component**:
+  - `ReportPage.jsx`: Shareable report route at `/reports/:scanId` configured with `<meta name="robots" content="noindex, nofollow" />` via `SeoHead` to prevent search engine indexing.
+  - `ReportHeader.jsx`: Sanitized URL display, status badge, metadata, share link copy button with feedback state, JSON/CSV export triggers, and native print trigger.
+  - `FindingSearchBar.jsx`: Real-time text search (OR across finding ID, title, description, recommendation, value) and multi-group filters (AND across groups: category, severity, status).
+  - Native `@media print` stylesheet rules in `index.css` hiding headers, footers, and action controls during printing.
+- **Automated Verification Test Suites**:
+  - `Scan.model.test.js`: Schema validation, strict mode, bufferCommands setting, regex pattern match, and TTL index configuration.
+  - `publicDto.test.js`: URL sanitization (credentials/query/fragment stripping) and DTO allowlist non-leakage verification.
+  - `persistenceTimeout.test.js`: Bounded 2000ms timeout, attached catch rejection handler, 5MB boundary check, and offline degraded mode fallback.
+  - `scansApiM9.test.js`: `GET /api/scans/:scanId` HTTP 200, 400 (malformed ID), 404 (not found/offline DB), and DTO security boundary verification.
+  - `exportUtils.test.js`: CSV injection protection, double quote escaping, JSON/CSV file generation, and download trigger safety.
+  - `ReportPage.test.jsx`: React component tests for `noindex, nofollow` meta tag, header metadata, action buttons, real-time search filtering, and 404 empty states.
+
+## Milestone 8: Action Center, Cross-Category Finding Prioritization & Deterministic Remediation Engine
+
+### Added
+- **Static Code Remediation Registry (`remediationRegistry.js`)**:
+  - 100% static, deterministic code fix registry mapping all **55 exact source-derived finding IDs** across M4–M7 scanners (`seo`: 8, `securityHeaders`: 8, `crawlability`: 3, `technical`: 5, `performance`: 6, `accessibility`: 10, `mobile`: 5, `content`: 10).
+  - Validated via Zod `remediationSchema` (`summary`, `impact`, `codeFix`, `steps`, `verification`).
+  - ZERO parameter interpolation, ZERO network requests, ZERO external dependencies, and ZERO fake metric scores or grades.
+- **Remediation Engine (`remediationEngine.js`)**:
+  - `getRemediationForFinding(finding)` static lookup module attaching structured remediation guides to actionable findings.
+- **Action Center Service (`actionCenterService.js`)**:
+  - Aggregates actionable findings (`status === 'fail'` or `status === 'warn'`) across all 8 scanner categories while excluding `info`, `pass`, and `category-error`.
+  - Implements 5-tier deterministic sorting algorithm: Severity Rank (`high` > `medium` > `low`) $\rightarrow$ Technical Domain (`security` > `accessibility` > `performance` > `seo_crawlability` > `markup_structure`) $\rightarrow$ Category Rank $\rightarrow$ Finding ID Alphabetical $\rightarrow$ Discovery Index.
+  - Safe error boundary returning graceful empty fallback `{ status: "error", summary: { actionable: 0, high: 0, medium: 0, low: 0 }, domainCounts: {...}, items: [] }` on exception without disrupting scan API HTTP 200 response or category findings.
+  - Non-leakage data filtering exposing safe UI fields only (`findingId`, `category`, `status`, `severity`, `domain`, `title`, `remediation`, `recommendation`).
+- **Frontend Action Center Components (`ActionCenterCard.jsx` & `RemediationDrawer.jsx`)**:
+  - `ActionCenterCard.jsx`: Summary overview card displaying actionable counts by severity badge, technical domain filter tabs (*All*, *Security*, *Accessibility*, *Performance*, *SEO & Crawlability*, *Markup & Quality*), severity filter tabs, action item cards, and drawer triggers.
+  - `RemediationDrawer.jsx`: Accessible slide-over drawer with focus trap & restoration, backdrop dismiss, Escape key dismiss, plain-text `<pre><code>` code snippet rendering, and copy-to-clipboard button with toast feedback.
+  - Integrated `ActionCenterCard` into `ScanResultView.jsx` above category cards.
+- **Automated Test Suites**:
+  - `remediationRegistry.test.js`: 7 unit tests enforcing 55 exact finding ID coverage, 0 stale entries, static content, non-leakage, and Zod schema validation.
+  - `actionCenterService.test.js`: 6 unit tests enforcing actionability inclusion rules, 55 ID domain mappings, 5-tier sorting, non-mutation of category findings, unknown ID handling, and error isolation.
+  - `scansApiM8.test.js`: 3 API integration tests verifying `data.actionCenter` payload structure, 8 categories preserved, dynamic scan IDs, error boundary isolation keeping HTTP 200, zero network calls, sensitive token non-leakage, and no score/grade fields.
+  - `ActionCenterCard.test.jsx` & `RemediationDrawer.test.jsx`: 15 React Testing Library tests covering Action Center card rendering, domain filtering, severity filtering, drawer open/close, focus management, code snippet rendering, and copy interactions.
+
+## Milestone 7: Content & Technical HTML Quality Analysis
+
+### Added
+- **Passive Content & Technical HTML Quality Analyzer (`contentAnalyzer.js`)**:
+  - Single-pass `htmlparser2` document inspection operating strictly on already-fetched, already-bounded HTML document.
+  - Visible body text volume: body-only text extraction (ignoring `<head>`, `<script>`, `<style>`, `<noscript>`, `<template>`, `<svg>`), Unicode code-point character counting (`Array.from().length`), and whitespace-normalized word counting.
+  - Empty page & low volume findings: flags 0 visible words (`content-empty-page`, `warn`), 1–49 words (`content-low-volume`, `warn`), and 50+ words (`content-word-count`, `pass`).
+  - Duplicate block-text detection: identifies qualifying block candidate elements (`p`, `div`, `li`, `article`, `section`) $\ge 8$ words repeated $\ge 3$ times (`content-duplicate-paragraphs`, `warn`). Implements nested container false-positive prevention (parent elements without direct text are ignored as wrapper candidates).
+  - Document structure 3-state evaluation: checks presence of `<html>`, `<head>`, and `<body>`. Passes if all 3 present (`content-document-structure`), warns and explicitly identifies missing tags if any are absent.
+  - Duplicate element IDs: tracks `id` attribute values across document. Passes if 0 duplicates (`content-duplicate-ids`), warns if duplicates found with bounded array (max 10 ID values), aggregate total count, and `hasMoreDuplicates` boolean.
+  - Link classification & href markup: classifies links into internal, external, anchor, mailto, tel, javascript, and empty/placeholder categories (`content-link-classification`). Evaluates empty/placeholder link thresholds: 0 (pass), 1–2 (info), 3+ (warn) (`content-href-markup`). Prevents raw href string dumps and handles malformed URL strings safely without crashing.
+  - Resource `src` markup validity: inspects `img`, `iframe`, `script`, `audio`, `video` elements for missing/empty/placeholder `src` attributes (`content-src-markup`, `warn`).
+  - Image width/height dimensional hints: checks `<img>` tags for valid positive integer `width` and `height` attributes (`/^\d+$/` > 0). Passes if all images specify valid dimensions (`content-image-dimensions`), warns if any are missing or invalid, returns `info` if 0 images present.
+- **Category Error Isolation & Service Orchestration**:
+  - Integrated `contentAnalyzer` into `scanService.js` under `categories.content` as the 8th category.
+  - Category error boundary isolates analyzer exceptions via `createCategoryErrorResult('content')` without failing the HTTP 200 scan response or disrupting the other 7 categories.
+  - Summary aggregation updated to sum all 8 category summaries (`seo`, `securityHeaders`, `crawlability`, `technical`, `performance`, `accessibility`, `mobile`, `content`).
+- **Frontend Card Component & Integration**:
+  - Created `ContentQualityCard.jsx` with 5 explicit filter tabs (`All`, `Pass`, `Warn`, `Fail`, `Info`), formatted aggregate scalar/object values, actionable recommendations, and theme design token compliance.
+  - Updated `ScanResultView.jsx` to render `ContentQualityCard`.
+- **Automated Verification Test Suites**:
+  - `contentAnalyzer.test.js`: 21 unit tests covering body-only text, ignored tags, Unicode counting, 0/1/49/50 word boundaries, duplicate paragraph detection & nested false-positive prevention, document structure 3-state check, duplicate ID bounding, link classification, malformed href safety, link thresholds, resource `src` validity, and image width/height dimensional checks.
+  - `scansApiM7.test.js`: 2 integration tests verifying 8-category payload structure, category error isolation, summary consistency, and zero outbound network calls.
+  - `ContentQualityCard.test.jsx`: 3 React component tests verifying rendering, summary badges, 5-tab filtering, values, and empty states.
+
 ## Milestone 6: Accessibility & Mobile Responsiveness Markup Analysis
 
 ### Added
