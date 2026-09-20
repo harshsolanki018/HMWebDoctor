@@ -157,18 +157,36 @@ export const ReportPage = () => {
   const getFilteredCategoryData = (catKey, catObj) => {
     if (!catObj || !Array.isArray(catObj.findings)) return catObj;
 
-    if (categoryFilter !== 'all' && categoryFilter !== catKey) {
-      return { ...catObj, findings: [] };
+    // Category filter check (OR within category filter group if array)
+    if (categoryFilter !== 'all') {
+      if (Array.isArray(categoryFilter)) {
+        if (!categoryFilter.includes(catKey)) return { ...catObj, findings: [] };
+      } else if (categoryFilter !== catKey) {
+        return { ...catObj, findings: [] };
+      }
     }
 
     const query = searchTerm.trim().toLowerCase();
 
     const filtered = catObj.findings.filter((finding) => {
-      // Domain filter check
-      if (domainFilter !== 'all' && getDomainForFinding(finding) !== domainFilter) return false;
+      // Domain filter check (OR within domain filter group if array)
+      if (domainFilter !== 'all') {
+        const fDomain = getDomainForFinding(finding);
+        if (Array.isArray(domainFilter)) {
+          if (!domainFilter.includes(fDomain)) return false;
+        } else if (fDomain !== domainFilter) {
+          return false;
+        }
+      }
 
-      // Severity filter check
-      if (severityFilter !== 'all' && finding.severity !== severityFilter) return false;
+      // Severity filter check (OR within severity filter group if array)
+      if (severityFilter !== 'all') {
+        if (Array.isArray(severityFilter)) {
+          if (!severityFilter.includes(finding.severity)) return false;
+        } else if (finding.severity !== severityFilter) {
+          return false;
+        }
+      }
 
       // Text search check (OR across EXACTLY 4 approved fields: id, title, message, recommendation)
       if (query) {
@@ -208,9 +226,31 @@ export const ReportPage = () => {
   // Filtered Action Center Items
   const filteredActionCenterItems = report?.actionCenter?.items?.filter((item) => {
     const itemDomain = item.domain || getDomainForFinding(item);
-    if (domainFilter !== 'all' && itemDomain !== domainFilter) return false;
-    if (severityFilter !== 'all' && item.severity !== severityFilter) return false;
-    if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
+
+    if (domainFilter !== 'all') {
+      if (Array.isArray(domainFilter)) {
+        if (!domainFilter.includes(itemDomain)) return false;
+      } else if (itemDomain !== domainFilter) {
+        return false;
+      }
+    }
+
+    if (severityFilter !== 'all') {
+      if (Array.isArray(severityFilter)) {
+        if (!severityFilter.includes(item.severity)) return false;
+      } else if (item.severity !== severityFilter) {
+        return false;
+      }
+    }
+
+    if (categoryFilter !== 'all') {
+      if (Array.isArray(categoryFilter)) {
+        if (!categoryFilter.includes(item.category)) return false;
+      } else if (item.category !== categoryFilter) {
+        return false;
+      }
+    }
+
     if (searchTerm.trim()) {
       const q = searchTerm.trim().toLowerCase();
       const fId = item.findingId || item.id;

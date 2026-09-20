@@ -76,10 +76,10 @@ export const RemediationDrawer = ({ isOpen, onClose, item, triggerRef }) => {
       }
 
       setCopied(true);
-      addToast('Copied code fix to clipboard', 'pass');
+      addToast({ title: 'Copied', message: 'Copied code fix to clipboard', type: 'success' });
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      addToast('Failed to copy code snippet', 'danger');
+      addToast({ title: 'Error', message: 'Failed to copy code snippet', type: 'danger' });
     }
   };
 

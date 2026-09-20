@@ -120,5 +120,26 @@ The backend provides a secure diagnostic website scanning endpoint at `POST /api
 - **Native Print & Focus Management**:
   - Scoped `@media print` CSS preserving main report header card and findings while hiding action buttons, search bar, navigation headers, footers, and slide-over remediation drawers (`RemediationDrawer.jsx`). Focus trap and restoration on drawer controls.
 
+## Product Polish, UX Consistency & Production Readiness (M12)
+- **Global Design System & Theme Consistency**:
+  - Theme token validation (`bg-surface`, `text-foreground`, `border-border`, `primary`, `secondary`, `muted`, `success`, `warning`, `danger`, `info`) across Light, Dark, and System color modes.
+  - Reduced-motion accessibility stylesheet rules (`@media (prefers-reduced-motion: reduce)`).
+- **Navigation & Active Route Highlighting**:
+  - Desktop and mobile header/footer navigation across all public product routes (`/`, `/how-it-works`, `/scan`, `/reports/:scanId`, `/about`, `/contact`, `/privacy`, `/terms`, 404). Active route styles (`text-primary`) highlight accurately.
+- **Asynchronous Loading & Empty Search States**:
+  - Honest indeterminate loading state (`Loader2` spinner with descriptive context) on `/scan` without fake progress bars or simulated timers.
+  - Skeleton loading views on `/reports/:scanId`.
+  - Empty finding search results feedback state with clear filter reset action.
+- **Keyboard Navigation & Accessibility**:
+  - Focus trap within `RemediationDrawer.jsx` when open, keyboard dismissal on `Escape` key press, and focus restoration to trigger element upon close.
+  - Accessible button names, semantic headings (`h1`–`h4`), ARIA dialog attributes (`role="dialog"`, `aria-labelledby`, `role="alert"`), and keyboard focus rings.
+- **Report Export & Privacy Non-Leakage Boundary**:
+  - Preserved CSV export 8-column layout (`Finding ID`, `Category`, `Status`, `Severity`, `Title`, `Message`, `Value`, `Recommendation`) with formula injection protection (`sanitizeCsvCell` for `=`, `+`, `-`, `@`, `\t`, `\r`).
+  - Preserved JSON DTO export (`<scanId>.json`) excluding internal database fields (`_id`, `__v`), request correlation IDs (`X-Request-Id`), credentials, or raw HTML.
+  - Scoped print stylesheet hiding non-report action controls (`.no-print`) while retaining scan header metadata and findings.
+- **Comprehensive Client UX Test Suite (`UXConsistency.test.jsx`)**:
+  - 17 unit/integration tests verifying navigation, target URL scan form execution, error alert states (400, 404, 429, 503, timeout, network error), finding search/filter semantics (OR across 4 text fields, excluding `value`), remediation drawer focus trap, export rules, and diagnostic posture guards (0 scores, grades, meters).
+
 ## Documentation
 See [HMWebDoctor_V1_Antigravity_Build_Package](./HMWebDoctor_V1_Antigravity_Build_Package/00_README.md) for full specifications.
+

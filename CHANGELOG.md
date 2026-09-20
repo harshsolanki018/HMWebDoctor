@@ -2,6 +2,28 @@
 
 All notable changes to HMWebDoctor will be documented in this file.
 
+## Milestone 12: Product Polish, UX Consistency & Production Readiness
+
+### Added
+- **Global Frontend Product Polish & UX Consistency**:
+  - Theme token validation across Light, Dark, and System color modes (`bg-surface`, `text-foreground`, `border-border`, `primary`, `secondary`, `muted`, `success`, `warning`, `danger`, `info`).
+  - Reduced-motion accessibility stylesheet rules (`@media (prefers-reduced-motion: reduce)`).
+- **Navigation & Active Route Highlighting**:
+  - Audited desktop and mobile header/footer navigation across all public routes (`/`, `/how-it-works`, `/scan`, `/reports/:scanId`, `/about`, `/contact`, `/privacy`, `/terms`, 404). Active route styles (`text-primary`) highlight accurately.
+- **Asynchronous Loading & Empty States**:
+  - Honest indeterminate loading state (`Loader2` spinner with descriptive context) on `/scan` without fake progress bars or simulated timers.
+  - Skeleton loading views on `/reports/:scanId`.
+  - Empty finding search results feedback state with clear filter reset action.
+- **Keyboard Navigation & Accessibility**:
+  - Focus trap within `RemediationDrawer.jsx` when open, keyboard dismissal on `Escape` key press, and focus restoration to trigger element upon close.
+  - Accessible button names, semantic headings (`h1`–`h4`), ARIA dialog attributes (`role="dialog"`, `aria-labelledby`, `role="alert"`), and keyboard focus rings.
+- **Report Export & Privacy Boundary Preservation**:
+  - Preserved CSV export 8-column layout (`Finding ID`, `Category`, `Status`, `Severity`, `Title`, `Message`, `Value`, `Recommendation`) with formula injection protection (`sanitizeCsvCell` for `=`, `+`, `-`, `@`, `\t`, `\r`).
+  - Preserved JSON DTO export (`<scanId>.json`) excluding internal database fields (`_id`, `__v`), request correlation IDs (`X-Request-Id`), credentials, or raw HTML.
+  - Scoped print stylesheet hiding non-report action controls (`.no-print`) while retaining scan header metadata and findings.
+- **Automated UX Verification Suite (`UXConsistency.test.jsx`)**:
+  - Added 17 comprehensive unit/integration tests verifying navigation, target URL scan form execution, error alert states (400, 404, 429, 503, timeout, network error), finding search/filter semantics (OR across 4 text fields, excluding `value`), remediation drawer focus trap, export rules, and diagnostic posture guards (0 scores, grades, meters).
+
 ## Milestone 11: Observability, Reliability & Production Hardening
 
 ### Added
