@@ -2,6 +2,31 @@
 
 All notable changes to HMWebDoctor will be documented in this file.
 
+## Milestone 11: Observability, Reliability & Production Hardening
+
+### Added
+- **Request Correlation ID Middleware (`requestId.js`)**:
+  - Validates incoming `X-Request-Id` headers against safe pattern (`/^[a-zA-Z0-9\-_]{8,64}$/`).
+  - Generates cryptographically safe fallback request IDs (`req_${randomUUID}`) for missing/malformed headers.
+  - Exposes `req.id` / `req.requestId` across request lifecycle and returns `X-Request-Id` header in all HTTP responses (including error responses).
+- **Hardened Structured Operational Logger (`logger.js`)**:
+  - Expanded sanitization rules to automatically redact HTTP URL credentials (`https://user:pass@host`), query parameters (`?token=...`, `?secret=...`, `?key=...`), fragments (`#...`), authorization headers, cookies, `destinationIp`, `resolvedIps`, and `rawHtml`.
+  - Enforces structured JSON log entries (`timestamp`, `level`, `event`, `message`, `meta`) containing request IDs, methods, paths, status codes, and durations without persisting request IDs inside MongoDB scan models or public report DTOs.
+- **Readiness API Endpoint (`GET /api/ready`)**:
+  - Provides a dedicated readiness probe indicating whether report storage service is ready to perform persistence operations (`status: "READY"` HTTP 200 vs `status: "NOT_READY"` HTTP 503).
+  - Preserved public `/api/health` contract (`healthy` / `degraded`) without leaking connection strings, hostnames, or internal topology.
+- **Client React Error Boundary (`ErrorBoundary.jsx`)**:
+  - Production-safe React error boundary component catching rendering exceptions across app routes.
+  - Presents a theme-compliant fallback card (`role="alert"`) with clear reload action button without leaking raw Javascript error traces or stack details.
+- **Client API & Network Error Handling**:
+  - Standardized network failure handling in `api.js` returning safe structured error objects for network offline, unexpected status codes, or malformed JSON responses.
+- **Process Failure Safety & Bounded Graceful Shutdown (`server.js`)**:
+  - Registered `unhandledRejection` and `uncaughtException` listeners logging sanitized errors.
+  - 10-second bounded graceful shutdown sequence on `SIGTERM` and `SIGINT` (stopping HTTP listener, clearing timeouts, closing Mongoose connection, and exiting cleanly).
+- **Automated Test Verification**:
+  - `observabilityAndReliability.test.js`: 8 unit/integration tests verifying request correlation, readiness probe, health privacy, logger redactions, and 404 error envelope.
+  - `ErrorBoundary.test.jsx`: 3 React Testing Library tests verifying normal rendering, error catching fallback UI, and reset/reload button action.
+
 ## Milestone 10: Report Sharing & Export Hardening
 
 ### Added

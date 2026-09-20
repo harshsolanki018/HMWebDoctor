@@ -3,6 +3,7 @@ const config = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/db');
 const logger = require('./utils/logger');
 
+let server;
 let isShuttingDown = false;
 
 const startServer = async () => {

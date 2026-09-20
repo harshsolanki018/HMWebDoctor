@@ -113,5 +113,15 @@
   4. **Native Print Experience**: Keep the main `ReportHeader` card visible during print so scan metadata, target URL, duration, and status are preserved, while attaching `.no-print` to the action button container, search bar (`FindingSearchBar.jsx`), navigation headers, footers, and slide-over drawers (`RemediationDrawer.jsx`).
 - **Impact**: Polished, accessible, and robust public report sharing and export experience with strict privacy compliance and zero non-leakage compromises.
 
+## ADR-023: Request Correlation, Readiness Probes & Client Error Boundary Architecture (M11)
+- **Context**: Milestone 11 introduces production observability, request correlation, readiness probing, hardened operational logging, process-level failure safety, and client-side error boundary protection. Observability and correlation IDs must operate exclusively as transient operational infrastructure without polluting persistent MongoDB scan models, public report DTOs, or data exports.
+- **Decision**:
+  1. **Request Correlation ID (`requestId.js`)**: Middleware checks `X-Request-Id` headers, validates format (`/^[a-zA-Z0-9\-_]{8,64}$/`), generates safe fallback IDs (`req_${randomUUID}`), exposes `req.id` during request lifecycle, and sets `X-Request-Id` on all HTTP responses. Correlation IDs are strictly excluded from Mongo schemas, Public DTOs, and data exports.
+  2. **Hardened Operational Logger (`logger.js`)**: Expands sanitization rules to automatically redact HTTP URL credentials (`https://user:pass@host`), query parameters (`?token=...`), fragments (`#...`), authorization headers, cookies, `destinationIp`, `resolvedIps`, and `rawHtml` from structured JSON log entries.
+  3. **Readiness Probe (`GET /api/ready`)**: Adds a separate readiness endpoint evaluating database readiness (`readyState === 1`). Returns HTTP 200 `{ status: "READY", ready: true }` when connected and HTTP 503 `{ status: "NOT_READY", ready: false }` when DB is unavailable, without leaking connection strings or topology details.
+  4. **Process Safety & Graceful Shutdown (`server.js`)**: Registers `unhandledRejection` and `uncaughtException` process listeners with sanitized logging. Enforces a 10-second bounded graceful shutdown sequence on `SIGTERM` and `SIGINT` signals.
+  5. **Client Error Boundary (`ErrorBoundary.jsx`)**: Implements React `componentDidCatch` error boundary wrapping main application routes. Displays a theme-compliant fallback card with reload action button (`role="alert"`) while strictly suppressing raw Javascript stack traces in production.
+- **Impact**: Production-grade observability, request correlation, readiness monitoring, and fault isolation with zero privacy compromises or schema pollution.
+
 
 
