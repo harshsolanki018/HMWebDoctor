@@ -4,16 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { Share2, Download, FileText, Printer, RotateCcw, Check, Globe, Clock, ShieldCheck } from 'lucide-react';
+import { Share2, Copy, Download, FileText, Printer, RotateCcw, Check, Globe, Clock, ShieldCheck } from 'lucide-react';
 import { exportReportToJson, exportReportToCsv } from '../../utils/exportUtils';
 
 export const ReportHeader = ({ report }) => {
   const navigate = useNavigate();
-  const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
 
   if (!report) return null;
 
-  const handleShare = async () => {
+  const handleShareLink = async () => {
     const shareUrl = `${window.location.origin}/reports/${report.scanId}`;
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -26,10 +27,29 @@ export const ReportHeader = ({ report }) => {
         document.execCommand('copy');
         document.body.removeChild(input);
       }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
     } catch {
-      setCopied(false);
+      setCopiedLink(false);
+    }
+  };
+
+  const handleCopyId = async () => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(report.scanId);
+      } else {
+        const input = document.createElement('input');
+        input.value = report.scanId;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2500);
+    } catch {
+      setCopiedId(false);
     }
   };
 
@@ -42,7 +62,7 @@ export const ReportHeader = ({ report }) => {
     : 'Recently scanned';
 
   return (
-    <Card className="border-primary/20 bg-surface shadow-md no-print mb-6">
+    <Card className="border-primary/20 bg-surface shadow-md mb-6">
       <CardContent className="p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           {/* Main Info */}
@@ -81,15 +101,27 @@ export const ReportHeader = ({ report }) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2 self-start lg:self-center">
+          <div className="flex flex-wrap items-center gap-2 self-start lg:self-center no-print">
             <Button
-              variant={copied ? 'success' : 'primary'}
+              variant={copiedLink ? 'success' : 'primary'}
               size="sm"
-              onClick={handleShare}
+              onClick={handleShareLink}
               className="flex items-center gap-1.5"
+              aria-label="Copy public report link"
             >
-              {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-              {copied ? 'Link Copied!' : 'Share Link'}
+              {copiedLink ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+              {copiedLink ? 'Link Copied!' : 'Share Link'}
+            </Button>
+
+            <Button
+              variant={copiedId ? 'success' : 'secondary'}
+              size="sm"
+              onClick={handleCopyId}
+              className="flex items-center gap-1.5"
+              aria-label="Copy scan ID"
+            >
+              {copiedId ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copiedId ? 'ID Copied!' : 'Copy ID'}
             </Button>
 
             <Button
@@ -97,6 +129,7 @@ export const ReportHeader = ({ report }) => {
               size="sm"
               onClick={() => exportReportToJson(report)}
               className="flex items-center gap-1.5"
+              aria-label="Export report as JSON"
             >
               <Download className="w-4 h-4" />
               Export JSON
@@ -107,6 +140,7 @@ export const ReportHeader = ({ report }) => {
               size="sm"
               onClick={() => exportReportToCsv(report)}
               className="flex items-center gap-1.5"
+              aria-label="Export report findings as CSV"
             >
               <FileText className="w-4 h-4" />
               Export CSV
@@ -117,6 +151,7 @@ export const ReportHeader = ({ report }) => {
               size="sm"
               onClick={handlePrint}
               className="flex items-center gap-1.5"
+              aria-label="Print scan report"
             >
               <Printer className="w-4 h-4" />
               Print
@@ -127,6 +162,7 @@ export const ReportHeader = ({ report }) => {
               size="sm"
               onClick={() => navigate('/scan')}
               className="flex items-center gap-1.5"
+              aria-label="Start new website scan"
             >
               <RotateCcw className="w-4 h-4" />
               New Scan

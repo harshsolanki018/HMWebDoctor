@@ -2,6 +2,26 @@
 
 All notable changes to HMWebDoctor will be documented in this file.
 
+## Milestone 10: Report Sharing & Export Hardening
+
+### Added
+- **Report Sharing UX & Clipboard Feedback (`ReportHeader.jsx`)**:
+  - Added dedicated "Copy Scan ID" button alongside "Share Link" action button.
+  - Implemented stateful success and failure feedback (`copiedLink`, `copiedId`) for both "Share Link" (`/reports/:scanId`) and "Copy Scan ID" (`report.scanId`).
+  - Added explicit, accessible `aria-label` attributes across all action buttons (`Copy public report link`, `Copy scan ID`, `Export report as JSON`, `Export report findings as CSV`, `Print scan report`, `Start new website scan`).
+- **CSV Export Hardening (`exportUtils.js`)**:
+  - Enforced exact 8-column header and row layout starting with `Finding ID` (`Finding ID`, `Category`, `Status`, `Severity`, `Title`, `Message`, `Value`, `Recommendation`).
+  - Formula injection mitigation (`sanitizeCsvCell`): Prefixes cell strings starting with `=`, `+`, `-`, `@`, `\t`, or `\r` with `'` (single quote) and escapes double quotes.
+- **Structured Report Error States (`ReportPage.jsx`)**:
+  - Distinct alert views and messages for HTTP 400 (`INVALID_SCAN_ID`), HTTP 404 (`NOT_FOUND`), HTTP 429 (`REPORT_RATE_LIMITED`), and HTTP 503 (`DATABASE_UNAVAILABLE`).
+  - Safe error rendering without leaking internal MongoDB stack traces or connection strings; HTTP 503 renders "Service Temporarily Unavailable" and is strictly prevented from collapsing into 404.
+- **Native Print & Focus Management Enhancements**:
+  - Scoped `@media print` rules: Preserves main report header card, title, sanitized target URL, scan date, status, categories, findings, and Action Center items while hiding action buttons, search controls, navigation header, footer, and slide-over drawers via `.no-print`.
+  - Added `.no-print` class to `RemediationDrawer.jsx`.
+- **Automated Verification Test Suites**:
+  - Updated `exportUtils.test.js` asserting exact M10 8-column order starting with `Finding ID` and formula injection neutralization.
+  - Updated `ReportPage.test.jsx` verifying Copy Link and Copy ID clipboard feedback, aria-label attributes, and distinct 400, 404, 429, and 503 error state renderings.
+
 ## Milestone 9: Shareable Scan Reports, Persistence & Data Export
 
 ### Added

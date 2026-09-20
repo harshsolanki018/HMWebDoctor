@@ -32,7 +32,7 @@ export const sanitizeCsvCell = (val) => {
 export const generateFindingsCsv = (report) => {
   if (!report || !report.categories) return '';
 
-  const headers = ['Category', 'Finding ID', 'Status', 'Severity', 'Title', 'Message', 'Value', 'Recommendation'];
+  const headers = ['Finding ID', 'Category', 'Status', 'Severity', 'Title', 'Message', 'Value', 'Recommendation'];
   const rows = [headers.map(sanitizeCsvCell).join(',')];
 
   const categoryKeys = Object.keys(report.categories);
@@ -42,8 +42,8 @@ export const generateFindingsCsv = (report) => {
     if (categoryObj && Array.isArray(categoryObj.findings)) {
       categoryObj.findings.forEach((finding) => {
         const row = [
+          finding.id || finding.findingId || '',
           catKey,
-          finding.id || '',
           finding.status || '',
           finding.severity || '',
           finding.title || '',

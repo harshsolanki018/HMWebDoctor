@@ -179,6 +179,27 @@ vi.mock('../src/services/api', () => ({
         error: null,
       });
     }
+    if (scanId === 'scan_invalid_400') {
+      return Promise.resolve({
+        success: false,
+        data: null,
+        error: { code: 'INVALID_SCAN_ID', message: 'Invalid Scan ID format.' },
+      });
+    }
+    if (scanId === 'scan_ratelimit_429') {
+      return Promise.resolve({
+        success: false,
+        data: null,
+        error: { code: 'REPORT_RATE_LIMITED', message: 'Rate limit exceeded.' },
+      });
+    }
+    if (scanId === 'scan_dbdown_503') {
+      return Promise.resolve({
+        success: false,
+        data: null,
+        error: { code: 'DATABASE_UNAVAILABLE', message: 'Report storage temporarily unavailable.' },
+      });
+    }
     return Promise.resolve({
       success: false,
       data: null,
@@ -221,20 +242,77 @@ describe('ReportPage & Shareable Public Report Suite', () => {
       await waitFor(() => {
         expect(screen.getByText('scan_0123456789abcdef')).toBeInTheDocument();
         expect(screen.getByText('https://example.com/')).toBeInTheDocument();
-        expect(screen.getByText('Share Link')).toBeInTheDocument();
-        expect(screen.getByText('Export JSON')).toBeInTheDocument();
-        expect(screen.getByText('Export CSV')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Copy public report link/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Copy scan ID/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Export report as JSON/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Export report findings as CSV/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Print scan report/i })).toBeInTheDocument();
         expect(screen.getAllByText('Missing HSTS Header').length).toBeGreaterThan(0);
       });
     });
 
-    it('renders 404 state when scan report is not found or expired', async () => {
+    it('supports Copy Scan ID and Share Link button feedback', async () => {
+      renderReportPage();
+      await waitFor(() => expect(screen.getByRole('button', { name: /Copy scan ID/i })).toBeInTheDocument());
+
+      // Mock navigator.clipboard
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeTextMock },
+        writable: true,
+      });
+
+      const copyIdBtn = screen.getByRole('button', { name: /Copy scan ID/i });
+      fireEvent.click(copyIdBtn);
+
+      await waitFor(() => {
+        expect(writeTextMock).toHaveBeenCalledWith('scan_0123456789abcdef');
+        expect(screen.getByText('ID Copied!')).toBeInTheDocument();
+      });
+
+      const shareLinkBtn = screen.getByRole('button', { name: /Copy public report link/i });
+      fireEvent.click(shareLinkBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText('Link Copied!')).toBeInTheDocument();
+      });
+    });
+
+    it('renders 400 (INVALID_SCAN_ID) state when scan ID is malformed', async () => {
+      renderReportPage('scan_invalid_400');
+
+      await waitFor(() => {
+        expect(screen.getByText('Invalid Scan ID')).toBeInTheDocument();
+        expect(screen.getByText('Invalid Scan ID format.')).toBeInTheDocument();
+      });
+    });
+
+    it('renders 404 (NOT_FOUND) state when scan report is not found or expired', async () => {
       renderReportPage('scan_ffffffffffffffff');
 
       await waitFor(() => {
         expect(screen.getByText('Report Not Found')).toBeInTheDocument();
         expect(screen.getByText('Scan report not found or expired.')).toBeInTheDocument();
         expect(screen.getByText('Run a New Website Scan')).toBeInTheDocument();
+      });
+    });
+
+    it('renders 429 (REPORT_RATE_LIMITED) state when rate limited', async () => {
+      renderReportPage('scan_ratelimit_429');
+
+      await waitFor(() => {
+        expect(screen.getByText('Rate Limit Exceeded')).toBeInTheDocument();
+        expect(screen.getByText('Rate limit exceeded.')).toBeInTheDocument();
+      });
+    });
+
+    it('renders 503 (DATABASE_UNAVAILABLE) state without falling back to 404', async () => {
+      renderReportPage('scan_dbdown_503');
+
+      await waitFor(() => {
+        expect(screen.getByText('Service Temporarily Unavailable')).toBeInTheDocument();
+        expect(screen.getByText('Report storage temporarily unavailable.')).toBeInTheDocument();
+        expect(screen.queryByText('Report Not Found')).not.toBeInTheDocument();
       });
     });
   });

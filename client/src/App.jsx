@@ -4,6 +4,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './components/ui/Toast';
 import { ScrollToTop } from './components/common/ScrollToTop';
 import { AppShell } from './components/layout/AppShell';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 import { HomePage } from './pages/HomePage';
 import { HowItWorksPage } from './pages/HowItWorksPage';
@@ -21,24 +22,26 @@ export function AppRoutes() {
     <ThemeProvider>
       <ToastProvider>
         <ScrollToTop />
-        <AppShell>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/how-it-works" element={<HowItWorksPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/scan" element={<ScanPage />} />
-            <Route path="/reports/:scanId" element={<ReportPage />} />
-            
-            {/* Isolated unlinked internal design system showcase */}
-            <Route path="/design-system" element={<DesignShowcase />} />
-            
-            {/* 404 Catch-all */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </AppShell>
+        <ErrorBoundary>
+          <AppShell>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/how-it-works" element={<HowItWorksPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/scan" element={<ScanPage />} />
+              <Route path="/reports/:scanId" element={<ReportPage />} />
+              
+              {/* Isolated unlinked internal design system showcase */}
+              <Route path="/design-system" element={<DesignShowcase />} />
+              
+              {/* 404 Catch-all */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </AppShell>
+        </ErrorBoundary>
       </ToastProvider>
     </ThemeProvider>
   );

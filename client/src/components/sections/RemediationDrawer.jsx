@@ -85,7 +85,7 @@ export const RemediationDrawer = ({ isOpen, onClose, item, triggerRef }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 no-print"
       aria-modal="true"
       role="dialog"
       aria-labelledby="remediation-drawer-title"

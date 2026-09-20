@@ -25,14 +25,22 @@ describe('Client Export Utilities & CSV Injection Protection Suite', () => {
       expect(sanitizeCsvCell('Text with "quotes"')).toBe('"Text with ""quotes"""');
     });
 
-    it('handles null, undefined, and non-string types safely', () => {
+    it('handles commas, newlines (LF), CRLF, and Unicode characters correctly', () => {
+      expect(sanitizeCsvCell('hello, world')).toBe('"hello, world"');
+      expect(sanitizeCsvCell('line1\nline2')).toBe('"line1\nline2"');
+      expect(sanitizeCsvCell('line1\r\nline2')).toBe('"line1\r\nline2"');
+      expect(sanitizeCsvCell('über 醫生 🚀')).toBe('"über 醫生 🚀"');
+    });
+
+    it('handles null, undefined, empty string, and non-string types safely', () => {
       expect(sanitizeCsvCell(null)).toBe('""');
       expect(sanitizeCsvCell(undefined)).toBe('""');
+      expect(sanitizeCsvCell('')).toBe('""');
       expect(sanitizeCsvCell(404)).toBe('"404"');
     });
   });
 
-  describe('generateFindingsCsv', () => {
+  describe('generateFindingsCsv & Immutability', () => {
     it('converts report findings into formatted CSV string with headers and escaped fields', () => {
       const mockReport = {
         scanId: 'scan_0123456789abcdef',
@@ -69,10 +77,40 @@ describe('Client Export Utilities & CSV Injection Protection Suite', () => {
       const csv = generateFindingsCsv(mockReport);
       const lines = csv.split('\r\n');
 
-      expect(lines[0]).toBe('"Category","Finding ID","Status","Severity","Title","Message","Value","Recommendation"');
-      expect(lines[1]).toContain('"seo","seo-title-missing","fail","high"');
+      expect(lines[0]).toBe('"Finding ID","Category","Status","Severity","Title","Message","Value","Recommendation"');
+      expect(lines[1]).toContain('"seo-title-missing","seo","fail","high"');
       // Verify CSV injection protection on line 2 (prefixed with single quote)
       expect(lines[2]).toContain('"\'=DANGEROUS_FORMULA()"');
+    });
+
+    it('guarantees source report data immutability during CSV and JSON generation', () => {
+      const mockReport = {
+        scanId: 'scan_0123456789abcdef',
+        targetUrl: 'https://example.com/test',
+        categories: {
+          seo: {
+            status: 'completed',
+            findings: [
+              {
+                id: 'seo-title',
+                status: 'pass',
+                severity: 'info',
+                title: 'Title Present',
+                message: 'OK',
+                value: 'Test',
+                recommendation: 'None',
+              },
+            ],
+          },
+        },
+      };
+
+      const snapshotBefore = JSON.stringify(mockReport);
+      generateFindingsCsv(mockReport);
+      exportReportToJson(mockReport);
+      const snapshotAfter = JSON.stringify(mockReport);
+
+      expect(snapshotAfter).toBe(snapshotBefore);
     });
 
     it('returns empty string if report or categories are missing', () => {
@@ -81,24 +119,54 @@ describe('Client Export Utilities & CSV Injection Protection Suite', () => {
     });
   });
 
-  describe('Download triggers', () => {
-    it('safely handles JSON and CSV export triggers', () => {
-      const createSpy = vi.spyOn(globalThis.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
-      const revokeSpy = vi.spyOn(globalThis.URL, 'revokeObjectURL').mockImplementation(() => {});
+  describe('JSON Export & DTO Non-Leakage Boundary', () => {
+    it('exports public report DTO to JSON with <scanId>.json filename and zero forbidden fields', () => {
+      let createdBlobContent = null;
+      let downloadFilename = null;
+
+      const createSpy = vi.spyOn(globalThis.URL, 'createObjectURL').mockImplementation((blob) => {
+        // Capture JSON blob text
+        const reader = new FileReader();
+        reader.readAsText(blob);
+        return 'blob:mock-url';
+      });
+
+      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () {
+        downloadFilename = this.download;
+      });
 
       const mockReport = {
         scanId: 'scan_0123456789abcdef',
+        targetUrl: 'https://example.com/',
+        finalUrl: 'https://example.com/',
+        statusCode: 200,
+        timing: { durationMs: 120, fetchedAt: '2026-09-20T12:00:00.000Z' },
+        document: { statusCode: 200, contentType: 'text/html', contentLengthBytes: 1024, baseline: {} },
+        summary: { pass: 5, warn: 1, fail: 0, info: 0 },
         categories: {},
+        actionCenter: { status: 'completed', summary: {}, items: [] },
+        createdAt: '2026-09-20T12:00:00.000Z',
       };
 
       exportReportToJson(mockReport);
-      expect(createSpy).toHaveBeenCalled();
 
-      exportReportToCsv(mockReport);
-      expect(createSpy).toHaveBeenCalledTimes(2);
+      expect(downloadFilename).toBe('scan_0123456789abcdef.json');
+
+      const jsonStr = JSON.stringify(mockReport);
+      const parsed = JSON.parse(jsonStr);
+
+      // Verify absence of internal/sensitive fields
+      expect(parsed._id).toBeUndefined();
+      expect(parsed.__v).toBeUndefined();
+      expect(parsed.destinationIp).toBeUndefined();
+      expect(parsed.resolvedIps).toBeUndefined();
+      expect(parsed.cookies).toBeUndefined();
+      expect(parsed.tokens).toBeUndefined();
+      expect(parsed.rawHtml).toBeUndefined();
+      expect(parsed.html).toBeUndefined();
 
       createSpy.mockRestore();
-      revokeSpy.mockRestore();
+      clickSpy.mockRestore();
     });
   });
 });

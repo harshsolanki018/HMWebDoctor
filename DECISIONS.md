@@ -104,5 +104,14 @@
   4. **Client-Side Export Utilities & Formula Injection Mitigation**: Implement `exportUtils.js` for JSON and CSV file generation. Apply CSV formula injection protection (`sanitizeCsvCell`) by prefixing cell strings starting with `=`, `+`, `-`, `@`, `\t`, or `\r` with `'` (single quote) and escaping double quotes. Include `@media print` rules in `index.css` hiding non-report UI elements during printing.
 - **Impact**: Secure, privacy-compliant, offline-resilient report persistence and export architecture with zero score/grade hallucinations and complete security boundary protection.
 
+## ADR-022: Report Sharing UX, CSV Column Alignment & Error State Hardening Architecture (M10)
+- **Context**: Milestone 10 hardens and polishes the `/reports/:scanId` public report experience. Sharing action buttons required dedicated Scan ID clipboard copy actions and accessible labels; CSV export column ordering needed strict alignment starting with `Finding ID`; error responses from the backend (HTTP 400, 404, 429, 503) required distinct, user-friendly frontend alert views; native printing required preserving core report header metadata while hiding action controls.
+- **Decision**:
+  1. **Sharing UX & Accessibility**: Add a dedicated "Copy Scan ID" button alongside "Share Link" in `ReportHeader.jsx`. Implement stateful feedback states (`copiedLink`, `copiedId`) and explicit `aria-label` attributes across all interactive action buttons.
+  2. **CSV Column Standardization**: Reorder CSV headers in `exportUtils.js` to exact 8 columns starting with `Finding ID` (`Finding ID`, `Category`, `Status`, `Severity`, `Title`, `Message`, `Value`, `Recommendation`). Maintain formula injection mitigation (`sanitizeCsvCell`).
+  3. **Structured Error Views**: Map backend error codes in `ReportPage.jsx` to distinct alert views: HTTP 400 (`INVALID_SCAN_ID`), HTTP 404 (`NOT_FOUND`), HTTP 429 (`REPORT_RATE_LIMITED`), and HTTP 503 (`DATABASE_UNAVAILABLE`). Strictly prevent 503 (database unavailable) from collapsing into 404 (not found).
+  4. **Native Print Experience**: Keep the main `ReportHeader` card visible during print so scan metadata, target URL, duration, and status are preserved, while attaching `.no-print` to the action button container, search bar (`FindingSearchBar.jsx`), navigation headers, footers, and slide-over drawers (`RemediationDrawer.jsx`).
+- **Impact**: Polished, accessible, and robust public report sharing and export experience with strict privacy compliance and zero non-leakage compromises.
+
 
 

@@ -11,8 +11,9 @@
 | 6 Accessibility + Mobile | COMPLETE |
 | 7 Passive Content & Technical HTML Quality Analysis | COMPLETE |
 | 8 Scoring + Diagnosis (Action Center & Remediation) | COMPLETE |
-| 9 Shareable Scan Reports, Persistence & Data Export | IMPLEMENTATION COMPLETE — AWAITING VERIFICATION |
-| 10 History & Comparative Analytics | NOT STARTED |
+| 9 Shareable Scan Reports, Persistence & Data Export | COMPLETE |
+| 10 Report Sharing & Export Hardening | IMPLEMENTATION COMPLETE — AWAITING VERIFICATION |
+| 11 History & Comparative Analytics | NOT STARTED |
 | 11 Production Hardening | NOT STARTED |
 
 Allowed values: NOT STARTED, IN PROGRESS, BLOCKED, COMPLETE.

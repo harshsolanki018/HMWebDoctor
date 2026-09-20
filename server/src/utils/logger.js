@@ -7,8 +7,14 @@ const sanitizeMessage = (data) => {
   if (typeof data === 'string') {
     // Redact MongoDB credentials from URIs (mongodb://user:pass@host)
     let sanitized = data.replace(/mongodb(\+srv)?:\/\/[^@]+@/gi, 'mongodb$1://[REDACTED_CREDENTIALS]@');
+    // Redact HTTP URL credentials (https://user:pass@host)
+    sanitized = sanitized.replace(/https?:\/\/[^:\s]+:[^@\s]+@/gi, 'https://[REDACTED_CREDENTIALS]@');
+    // Redact sensitive query parameters and URL credentials
+    sanitized = sanitized.replace(/([?&])(token|secret|password|auth|access_token|key|apiKey)=[^&#\s]+/gi, '$1$2=[REDACTED]');
+    // Redact URL fragments
+    sanitized = sanitized.replace(/#[^\s]+/gi, '#[REDACTED]');
     // Redact password or token string values
-    sanitized = sanitized.replace(/(password|token|secret|auth)=[^&\s]+/gi, '$1=[REDACTED]');
+    sanitized = sanitized.replace(/(password|token|secret|auth|authorization|cookie)=[^&\s]+/gi, '$1=[REDACTED]');
     return sanitized;
   }
 
@@ -21,7 +27,10 @@ const sanitizeMessage = (data) => {
         lowerKey.includes('token') ||
         lowerKey.includes('secret') ||
         lowerKey.includes('authorization') ||
-        lowerKey.includes('cookie')
+        lowerKey.includes('cookie') ||
+        lowerKey.includes('destinationip') ||
+        lowerKey.includes('resolvedip') ||
+        lowerKey.includes('rawhtml')
       ) {
         copy[key] = '[REDACTED]';
       } else if (typeof value === 'object' && value !== null) {

@@ -9,12 +9,17 @@ const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || err.status || 500;
   const errorCode = err.code || 'INTERNAL_SERVER_ERROR';
 
+  if (req && (req.id || req.requestId)) {
+    res.setHeader('X-Request-Id', req.id || req.requestId);
+  }
+
   // Log sanitized error internally
   logger.error('request_error', err.message || 'An unexpected error occurred', {
+    requestId: req ? req.id || req.requestId : undefined,
     code: errorCode,
     statusCode,
-    path: req.originalUrl,
-    method: req.method,
+    path: req ? req.originalUrl : undefined,
+    method: req ? req.method : undefined,
   });
 
   // Client response format - sanitize error details

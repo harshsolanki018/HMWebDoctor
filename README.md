@@ -110,6 +110,15 @@ The backend provides a secure diagnostic website scanning endpoint at `POST /api
 - **Client Data Export Utilities**:
   - Export full report as `<scanId>.json` or flat findings as `<scanId>-findings.csv` with CSV formula injection protection (`sanitizeCsvCell`). Native `@media print` print styles for clean PDF/paper printing.
 
+## Report Sharing & Export Hardening (M10)
+- **Enhanced Sharing UX & Clipboard Feedback**:
+  - Dedicated "Copy Scan ID" button alongside "Share Link" (`/reports/:scanId`) with stateful success/failure feedback (`copiedLink`, `copiedId`) and explicit `aria-label` attributes on all action controls.
+- **Standardized CSV Export Layout**:
+  - Exact 8-column header and row layout starting with `Finding ID` (`Finding ID`, `Category`, `Status`, `Severity`, `Title`, `Message`, `Value`, `Recommendation`) with single-quote formula injection protection for `=`, `+`, `-`, `@`, `\t`, `\r`.
+- **Structured Error State Handling**:
+  - Distinct alert views and messages for HTTP 400 (`INVALID_SCAN_ID`), HTTP 404 (`NOT_FOUND`), HTTP 429 (`REPORT_RATE_LIMITED`), and HTTP 503 (`DATABASE_UNAVAILABLE`). 503 errors render "Service Temporarily Unavailable" and never fall back to 404.
+- **Native Print & Focus Management**:
+  - Scoped `@media print` CSS preserving main report header card and findings while hiding action buttons, search bar, navigation headers, footers, and slide-over remediation drawers (`RemediationDrawer.jsx`). Focus trap and restoration on drawer controls.
+
 ## Documentation
 See [HMWebDoctor_V1_Antigravity_Build_Package](./HMWebDoctor_V1_Antigravity_Build_Package/00_README.md) for full specifications.
-

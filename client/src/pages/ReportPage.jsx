@@ -246,16 +246,32 @@ export const ReportPage = () => {
           </div>
         )}
 
-        {error && !isLoading && (
-          <div className="max-w-2xl mx-auto py-12 text-center space-y-6">
-            <Alert variant="danger" icon={AlertCircle} title="Report Not Found">
-              {error.message || 'The requested scan report could not be found or has expired.'}
-            </Alert>
-            <Button variant="primary" icon={RotateCcw} onClick={() => navigate('/scan')}>
-              Run a New Website Scan
-            </Button>
-          </div>
-        )}
+        {error && !isLoading && (() => {
+          let errorTitle = 'Report Not Found';
+          let errorMessage = error.message || 'The requested scan report could not be found or has expired.';
+
+          if (error.code === 'INVALID_SCAN_ID') {
+            errorTitle = 'Invalid Scan ID';
+            errorMessage = error.message || 'The provided scan ID format is invalid. Scan IDs must start with scan_ followed by hexadecimal characters.';
+          } else if (error.code === 'REPORT_RATE_LIMITED') {
+            errorTitle = 'Rate Limit Exceeded';
+            errorMessage = error.message || 'Too many requests for this report. Please wait a moment before trying again.';
+          } else if (error.code === 'DATABASE_UNAVAILABLE') {
+            errorTitle = 'Service Temporarily Unavailable';
+            errorMessage = error.message || 'Report storage is temporarily unavailable. Please try again in a few moments.';
+          }
+
+          return (
+            <div className="max-w-2xl mx-auto py-12 text-center space-y-6">
+              <Alert variant="danger" icon={AlertCircle} title={errorTitle}>
+                {errorMessage}
+              </Alert>
+              <Button variant="primary" icon={RotateCcw} onClick={() => navigate('/scan')}>
+                Run a New Website Scan
+              </Button>
+            </div>
+          );
+        })()}
 
         {report && !isLoading && (
           <div className="space-y-8 animate-in fade-in duration-300">
